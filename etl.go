@@ -137,7 +137,7 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 			})
 		}
 
-		if len(ttx) >= 100 {
+		if len(ttx) >= 200 {
 			if err := etl.batchInsert(ttx); err != nil {
 				return err
 			}
