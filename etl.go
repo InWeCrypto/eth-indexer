@@ -169,9 +169,9 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 				return err
 			}
 
-			for _, msg := range msgs {
-				etl.DebugF("tx %s event send", string(msg.Key))
-			}
+			// for _, msg := range msgs {
+			// 	etl.DebugF("tx %s event send", string(msg.Key))
+			// }
 
 			msgs = make([]*gomq.BatchMessage, 0)
 		}
@@ -183,9 +183,9 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 			return err
 		}
 
-		for _, msg := range msgs {
-			etl.DebugF("tx %s event send", string(msg.Key))
-		}
+		// for _, msg := range msgs {
+		// 	etl.DebugF("tx %s event send", string(msg.Key))
+		// }
 	}
 
 	return nil

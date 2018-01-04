@@ -134,7 +134,7 @@
 			"revisionTime": "2017-12-27T03:30:48Z"
 		},
 		{
-			"checksumSHA1": "P1jsp89Sp+KnS8U17jQmIFENrG0=",
+			"checksumSHA1": "OjlLkvo3QEXsHPDJcbLF2MCcxes=",
 			"path": "github.com/inwecrypto/ethgo/rpc",
 			"revision": "6381346dcd3d68d26c61e18f5b282f1e9ae5dedf",
 			"revisionTime": "2017-12-27T03:30:48Z"
@@ -142,8 +142,8 @@
 		{
 			"checksumSHA1": "ETRtag4/4gwOecAyLHplQYmpC6k=",
 			"path": "github.com/inwecrypto/gomq",
-			"revision": "52e0a010c834d0d321578c72e7efe398c4bf2416",
-			"revisionTime": "2017-11-14T03:21:41Z"
+			"revision": "870403822f70edf7c5328b36dd3c2ab09b1b642b",
+			"revisionTime": "2018-01-01T14:46:32Z"
 		},
 		{
 			"checksumSHA1": "WKvNg8eVPbGuu7NeKiUFZACpI8k=",
