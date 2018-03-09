@@ -93,8 +93,8 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 		if len(input) > 74 && string(input[2:10]) == erc20.TransferID {
 			to = string(append([]byte{'0', 'x'}, input[34:74]...))
 			assetID = tx.To
-			if len(input) > 114 {
-				value = string(append([]byte{'0', 'x'}, input[74:114]...))
+			if len(input) > 138 {
+				value = string(append([]byte{'0', 'x'}, input[74:138]...))
 			} else {
 				value = string(append([]byte{'0', 'x'}, input[74:]...))
 			}
