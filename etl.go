@@ -137,7 +137,7 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 			})
 		}
 
-		if len(ttx) >= 100 {
+		if len(ttx) >= 200 {
 			if err := etl.batchInsert(ttx); err != nil {
 				return err
 			}
@@ -153,13 +153,39 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 		}
 	}
 
+	var msgs []*gomq.BatchMessage
+
 	for _, tx := range block.Transactions {
-		if err := etl.mq.Produce(etl.topic, []byte(tx.Hash), tx.Hash); err != nil {
+
+		msgs = append(msgs, &gomq.BatchMessage{
+			Topic:   etl.topic,
+			Key:     []byte(tx.Hash),
+			Content: tx.Hash,
+		})
+
+		if len(msgs) >= 200 {
+			if err := etl.mq.Batch(msgs); err != nil {
+				etl.ErrorF("mq insert err :%s", err)
+				return err
+			}
+
+			// for _, msg := range msgs {
+			// 	etl.DebugF("tx %s event send", string(msg.Key))
+			// }
+
+			msgs = make([]*gomq.BatchMessage, 0)
+		}
+	}
+
+	if len(msgs) > 0 {
+		if err := etl.mq.Batch(msgs); err != nil {
 			etl.ErrorF("mq insert err :%s", err)
 			return err
 		}
 
-		etl.DebugF("tx %s event send", tx.Hash)
+		// for _, msg := range msgs {
+		// 	etl.DebugF("tx %s event send", string(msg.Key))
+		// }
 	}
 
 	return nil

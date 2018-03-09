@@ -2,6 +2,8 @@ package indexer
 
 import (
 	"encoding/binary"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dynamicgo/slf4go"
@@ -20,6 +22,7 @@ type Monitor struct {
 	etl          *ETL
 	pullDuration time.Duration
 	db           *leveldb.DB
+	blocks       chan *rpc.Block
 }
 
 // NewMonitor .
@@ -44,12 +47,15 @@ func NewMonitor(conf *config.Config) (*Monitor, error) {
 		etl:          etl,
 		pullDuration: time.Second * conf.GetDuration("indexer.pull", 4),
 		db:           db,
+		blocks:       make(chan *rpc.Block, conf.GetInt64("indexer.cached", 100)),
 	}, nil
 }
 
 // Run start monitor
 func (monitor *Monitor) Run() {
 	ticker := time.NewTicker(monitor.pullDuration)
+
+	go monitor.doETL()
 
 	for _ = range ticker.C {
 		monitor.DebugF("fetch geth last block number ...")
@@ -59,17 +65,46 @@ func (monitor *Monitor) Run() {
 			monitor.ErrorF("fetch geth blocks err, %s", err)
 		}
 
-		for monitor.getCursor() < blocks {
-			if err := monitor.fetchBlock(); err != nil {
+		for current := monitor.getCursor(); current < blocks; current++ {
+			if err := monitor.fetchBlock(current); err != nil {
 				break
 			}
 		}
 	}
 }
 
-func (monitor *Monitor) fetchBlock() error {
+func (monitor *Monitor) doETL() {
 
-	blockNumber := monitor.getCursor()
+	for block := range monitor.blocks {
+
+		blockNumber, err := strconv.ParseUint(strings.TrimPrefix(block.Number, "0x"), 16, 64)
+
+		if err != nil {
+			time.Sleep(monitor.pullDuration)
+			continue
+		}
+
+		monitor.DebugF("etl handle block(%d) ...", blockNumber)
+
+		if err := monitor.etl.Handle(block); err != nil {
+			monitor.ErrorF("etl handle geth block(%d) err, %s", blockNumber, err)
+			time.Sleep(monitor.pullDuration)
+			continue
+		}
+
+		monitor.DebugF("etl handle block(%d) -- success", blockNumber)
+
+		if err := monitor.setCursor(blockNumber + 1); err != nil {
+			monitor.ErrorF("monitor set cursor(%d) err, %s", blockNumber, err)
+			time.Sleep(monitor.pullDuration)
+			continue
+		}
+	}
+}
+
+func (monitor *Monitor) fetchBlock(blockNumber uint64) error {
+
+	// blockNumber := monitor.getCursor()
 
 	monitor.DebugF("fetch block(%d) ...", blockNumber)
 
@@ -82,19 +117,7 @@ func (monitor *Monitor) fetchBlock() error {
 
 	monitor.DebugF("fetch block(%d) -- success", blockNumber)
 
-	monitor.DebugF("etl handle block(%d) ...", blockNumber)
-
-	if err := monitor.etl.Handle(block); err != nil {
-		monitor.ErrorF("etl handle geth block(%d) err, %s", blockNumber, err)
-		return err
-	}
-
-	monitor.DebugF("etl handle block(%d) -- success", blockNumber)
-
-	if err := monitor.setCursor(blockNumber + 1); err != nil {
-		monitor.ErrorF("monitor set cursor(%d) err, %s", blockNumber, err)
-		return err
-	}
+	monitor.blocks <- block
 
 	return nil
 }
