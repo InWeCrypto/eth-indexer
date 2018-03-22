@@ -41,14 +41,25 @@ func NewMonitor(conf *config.Config) (*Monitor, error) {
 		return nil, err
 	}
 
-	return &Monitor{
+	startindexer := conf.GetInt64("indexer.start", 0)
+
+	monitor := &Monitor{
 		Logger:       slf4go.Get("eth-monitor"),
 		client:       client,
 		etl:          etl,
 		pullDuration: time.Second * conf.GetDuration("indexer.pull", 4),
 		db:           db,
 		blocks:       make(chan *rpc.Block, conf.GetInt64("indexer.cached", 100)),
-	}, nil
+	}
+
+	if monitor.getCursor() < startindexer {
+		if err := monitor.setCursor(startindexer); err != nil {
+			return nil, err
+		}
+
+	}
+
+	return monitor, nil
 }
 
 // Run start monitor
