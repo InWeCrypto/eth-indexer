@@ -41,7 +41,7 @@ func NewMonitor(conf *config.Config) (*Monitor, error) {
 		return nil, err
 	}
 
-	startindexer := conf.GetInt64("indexer.start", 0)
+	startindexer := uint64(conf.GetInt64("indexer.start", 0))
 
 	monitor := &Monitor{
 		Logger:       slf4go.Get("eth-monitor"),
