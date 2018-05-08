@@ -12,6 +12,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/inwecrypto/ethdb"
 	"github.com/inwecrypto/ethgo/erc20"
+	"github.com/inwecrypto/ethgo/erc721"
 	"github.com/inwecrypto/ethgo/rpc"
 	"github.com/inwecrypto/gomq"
 	gomqkafka "github.com/inwecrypto/gomq-kafka"
@@ -90,14 +91,40 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 
 		input := tx.Input
 
-		if len(input) > 74 && string(input[2:10]) == erc20.TransferID {
-			to = string(append([]byte{'0', 'x'}, input[34:74]...))
-			assetID = tx.To
-			value = string(append([]byte{'0', 'x'}, input[74:]...))
-		} else if len(input) > 74 && string(input[2:10]) == erc20.ApproveID {
-			to = string(append([]byte{'0', 'x'}, input[34:74]...))
-			assetID = erc20.ApproveID + "," + tx.To
-			value = string(append([]byte{'0', 'x'}, input[74:]...))
+		method := ""
+		inputLen := len(input)
+		if inputLen >= 10 {
+			method = string(input[2:10])
+		}
+
+		switch method {
+		case erc20.TransferID:
+			if inputLen >= 74 {
+				to = string(append([]byte{'0', 'x'}, input[34:74]...))
+				assetID = tx.To
+				value = string(append([]byte{'0', 'x'}, input[74:]...))
+			}
+
+		case erc20.ApproveID:
+			if inputLen >= 74 {
+				to = string(append([]byte{'0', 'x'}, input[34:74]...))
+				assetID = erc20.ApproveID + "," + tx.To
+				value = string(append([]byte{'0', 'x'}, input[74:]...))
+			}
+
+			// land
+		case erc721.Method_transferLand:
+			if inputLen >= 202 {
+				x := string(append([]byte{'0', 'x'}, input[10:74]...))
+				y := string(append([]byte{'0', 'x'}, input[74:138]...))
+
+				to = string(append([]byte{'0', 'x'}, input[162:202]...))
+				assetID = erc721.Method_transferLand + "," + tx.To
+				value = x + "," + y
+			}
+
+		default:
+
 		}
 
 		txValue := big.NewInt(0)

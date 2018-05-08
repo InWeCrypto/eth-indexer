@@ -134,6 +134,12 @@
 			"revisionTime": "2018-05-04T07:23:40Z"
 		},
 		{
+			"checksumSHA1": "P7Ky3aTaUs+icTXjMmqxM9UbDNM=",
+			"path": "github.com/inwecrypto/ethgo/erc721",
+			"revision": "5794222df97c52badd70ac7b88bf87c51fa08565",
+			"revisionTime": "2018-05-04T07:23:40Z"
+		},
+		{
 			"checksumSHA1": "ElWI6EokQ8b0tO8g56Embm9p0cI=",
 			"path": "github.com/inwecrypto/ethgo/rpc",
 			"revision": "8057c03d5ff07ce98a206bf32f6aa9f15abeec3d",
