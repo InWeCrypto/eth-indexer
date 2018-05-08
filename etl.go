@@ -12,6 +12,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/inwecrypto/ethdb"
 	"github.com/inwecrypto/ethgo/erc20"
+	"github.com/inwecrypto/ethgo/erc721"
 	"github.com/inwecrypto/ethgo/rpc"
 	"github.com/inwecrypto/gomq"
 	gomqkafka "github.com/inwecrypto/gomq-kafka"
@@ -90,14 +91,40 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 
 		input := tx.Input
 
-		if len(input) > 74 && string(input[2:10]) == erc20.TransferID {
-			to = string(append([]byte{'0', 'x'}, input[34:74]...))
-			assetID = tx.To
-			if len(input) > 138 {
-				value = string(append([]byte{'0', 'x'}, input[74:138]...))
-			} else {
+		method := ""
+		inputLen := len(input)
+		if inputLen >= 10 {
+			method = string(input[2:10])
+		}
+
+		switch method {
+
+		case erc20.TransferID:
+			if inputLen >= 74 {
+				to = string(append([]byte{'0', 'x'}, input[34:74]...))
+				assetID = tx.To
 				value = string(append([]byte{'0', 'x'}, input[74:]...))
 			}
+
+		case erc20.ApproveID:
+			if inputLen >= 74 {
+				to = string(append([]byte{'0', 'x'}, input[34:74]...))
+				assetID = erc20.ApproveID + "," + tx.To
+				value = string(append([]byte{'0', 'x'}, input[74:]...))
+			}
+
+			// land
+		case erc721.Method_transferLand:
+			if inputLen >= 202 {
+				x := string(append([]byte{'0', 'x'}, input[10:74]...))
+				y := string(append([]byte{'0', 'x'}, input[74:138]...))
+
+				to = string(append([]byte{'0', 'x'}, input[162:202]...))
+				assetID = erc721.Method_transferLand + "," + tx.To
+				value = x + "," + y
+			}
+
+		default:
 
 		}
 
@@ -137,7 +164,7 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 			})
 		}
 
-		if len(ttx) >= 200 {
+		if len(ttx) >= 100 {
 			if err := etl.batchInsert(ttx); err != nil {
 				return err
 			}
@@ -153,39 +180,13 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 		}
 	}
 
-	var msgs []*gomq.BatchMessage
-
 	for _, tx := range block.Transactions {
-
-		msgs = append(msgs, &gomq.BatchMessage{
-			Topic:   etl.topic,
-			Key:     []byte(tx.Hash),
-			Content: tx.Hash,
-		})
-
-		if len(msgs) >= 200 {
-			if err := etl.mq.Batch(msgs); err != nil {
-				etl.ErrorF("mq insert err :%s", err)
-				return err
-			}
-
-			// for _, msg := range msgs {
-			// 	etl.DebugF("tx %s event send", string(msg.Key))
-			// }
-
-			msgs = make([]*gomq.BatchMessage, 0)
-		}
-	}
-
-	if len(msgs) > 0 {
-		if err := etl.mq.Batch(msgs); err != nil {
+		if err := etl.mq.Produce(etl.topic, []byte(tx.Hash), tx.Hash); err != nil {
 			etl.ErrorF("mq insert err :%s", err)
 			return err
 		}
 
-		for _, msg := range msgs {
-			etl.DebugF("tx %s event send", string(msg.Key))
-		}
+		etl.DebugF("tx %s event send", tx.Hash)
 	}
 
 	return nil
