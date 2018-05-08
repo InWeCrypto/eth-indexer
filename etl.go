@@ -98,6 +98,7 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 		}
 
 		switch method {
+
 		case erc20.TransferID:
 			if inputLen >= 74 {
 				to = string(append([]byte{'0', 'x'}, input[34:74]...))
