@@ -128,10 +128,10 @@
 			"revisionTime": "2017-12-11T11:29:46Z"
 		},
 		{
-			"checksumSHA1": "3jlcEcSe9Qkf8pv7XjxY+Y/y614=",
+			"checksumSHA1": "EsSya5kf1XT/qIPD9RZ85JFAOCM=",
 			"path": "github.com/inwecrypto/ethgo/erc20",
-			"revision": "8057c03d5ff07ce98a206bf32f6aa9f15abeec3d",
-			"revisionTime": "2017-12-12T08:20:54Z"
+			"revision": "5794222df97c52badd70ac7b88bf87c51fa08565",
+			"revisionTime": "2018-05-04T07:23:40Z"
 		},
 		{
 			"checksumSHA1": "ElWI6EokQ8b0tO8g56Embm9p0cI=",

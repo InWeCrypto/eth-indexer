@@ -94,6 +94,10 @@ func (etl *ETL) Handle(block *rpc.Block) error {
 			to = string(append([]byte{'0', 'x'}, input[34:74]...))
 			assetID = tx.To
 			value = string(append([]byte{'0', 'x'}, input[74:]...))
+		} else if len(input) > 74 && string(input[2:10]) == erc20.ApproveID {
+			to = string(append([]byte{'0', 'x'}, input[34:74]...))
+			assetID = erc20.ApproveID + "," + tx.To
+			value = string(append([]byte{'0', 'x'}, input[74:]...))
 		}
 
 		txValue := big.NewInt(0)
